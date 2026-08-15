@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sohiba uchun 💕</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; overflow:hidden;
+  font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#ffd6e7,#fff0f6,#ffc1da);
+  color:#7b1745; display:flex; align-items:center; justify-content:center;
+}
+.card{
+  width:min(92%,430px); min-height:560px; padding:30px 24px;
+  background:rgba(255,255,255,.82); border-radius:30px;
+  box-shadow:0 15px 50px rgba(150,30,80,.18);
+  text-align:center; position:relative; z-index:2;
+}
+h1{margin:5px 0 8px;font-size:30px}
+.subtitle{color:#a64b70;margin-bottom:28px}
+.question{font-size:21px;font-weight:700;line-height:1.35;margin:25px 0}
+.option{
+  width:100%; border:0; padding:15px; margin:8px 0;
+  border-radius:18px; background:#fff; color:#7b1745;
+  font-size:16px; cursor:pointer; box-shadow:0 4px 14px #eab2c855;
+  transition:.2s;
+}
+.option:hover{transform:scale(1.02);background:#ffe2ed}
+.progress{font-size:13px;color:#b35b7e}
+.hidden{display:none}
+.heart{
+  border:0;background:none;font-size:110px;cursor:pointer;
+  animation:pulse 1.2s infinite; filter:drop-shadow(0 8px 12px #d94d8366);
+}
+.hint{font-size:17px;margin-top:8px;animation:blink 1.5s infinite}
+.love{font-size:34px;font-weight:800;animation:pop .8s ease}
+.small{margin-top:15px;color:#a64b70}
+.float{
+  position:fixed; bottom:-30px; font-size:24px; opacity:.7;
+  animation:up linear forwards; z-index:1;
+}
+@keyframes pulse{50%{transform:scale(1.13)}}
+@keyframes blink{50%{opacity:.45}}
+@keyframes pop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes up{to{transform:translateY(-110vh) rotate(25deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="quiz">
+    <div class="progress" id="progress">1 / 5</div>
+    <h1>💕 Sohiba uchun 💕</h1>
+    <div class="subtitle">Kichkina savollarga javob berib ko‘r 😊</div>
+    <div id="question" class="question"></div>
+    <div id="options"></div>
+  </div>
+
+  <div id="finish" class="hidden">
+    <h1>💗 Hammasi tugadi 💗</h1>
+    <p class="subtitle">Endi oxirgi bir kichkina ish qoldi...</p>
+    <button class="heart" onclick="revealLove()">❤️</button>
+    <div class="hint">Yurakchani bosib ko‘r 👆💕</div>
+  </div>
+
+  <div id="love" class="hidden">
+    <div class="love">MEN SENI SEVAMAN ❤️</div>
+    <p class="small">Bu gapni anchadan beri aytishni xohlagandim... 💕</p>
+    <div id="afterLove" class="hidden" style="margin-top:28px">
+      <div class="question">Rozimisan? ❤️</div>
+      <button class="option" onclick="finalAnswer('Ha ❤️')">❤️ Ha</button>
+      <button class="option" onclick="finalAnswer('Yo‘q 💗')">💗 Yo‘q</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions=[
+ {q:"Bo‘sh vaqtingda nima qilishni ko‘proq yoqtirasan?",o:["🎬 Kino ko‘rish","🎧 Musiqa tinglash","🌸 Sayr qilish","💬 Uzoq suhbatlashish"]},
+ {q:"Senga eng yoqimli sovg‘a qaysi?",o:["🌹 Gul","🍫 Shirinlik","💌 Yoqimli xat","🎁 Kutilmagan sovg‘a"]},
+ {q:"Biror inson seni doim kuldirsa, uni qanday inson deb bilasan?",o:["😄 Qiziqarli","😊 Yaxshi inson","❤️ Yaqin inson","🤭 Bilmadim"]},
+ {q:"Seningcha, yaxshi munosabatda eng muhim narsa nima?",o:["🤝 Ishonch","❤️ Hurmat","🥰 E’tibor","💕 Hammasi"]},
+ {q:"Agar kimdir senga aytmoqchi bo‘lgan muhim gapi borligini aytsa, eshitishga tayyormisan?",o:["❤️ Ha","😍 Albatta","🤭 Qiziq ekan","😄 Aytaqol"]}
+];
+let current=0, answers=[];
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzo1dzfKZvQH_TU3Wt2tXC4-YemaUGNN_XubuGLN6DYTNA1LSg3DRDFUUEJaWD76yzx/exec"; // Keyin Google Apps Script URL'sini shu yerga qo'yamiz.
+
+const qEl=document.getElementById("question"), oEl=document.getElementById("options"), pEl=document.getElementById("progress");
+
+function render(){
+  pEl.textContent=`${current+1} / ${questions.length}`;
+  qEl.textContent=questions[current].q;
+  oEl.innerHTML="";
+  questions[current].o.forEach((text,i)=>{
+    const b=document.createElement("button");
+    b.className="option"; b.textContent=text;
+    b.onclick=()=>choose(i);
+    oEl.appendChild(b);
+  });
+}
+function choose(i){
+  answers.push({question:questions[current].q,answer:questions[current].o[i]});
+  current++;
+  if(current<questions.length) render();
+  else{
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("finish").classList.remove("hidden");
+  }
+}
+async function sendAnswers(){
+  if(!BACKEND_URL) return;
+  try{
+    await fetch(BACKEND_URL,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({
+        submittedAt:new Date().toISOString(),
+        answers:answers
+      })
+    });
+  }catch(e){ console.log("Javob yuborilmadi",e); }
+}
+function revealLove(){
+  sendAnswers();
+  document.getElementById("finish").classList.add("hidden");
+  document.getElementById("love").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("afterLove").classList.remove("hidden"),1200);
+  for(let i=0;i<22;i++) setTimeout(makeHeart,i*90);
+}
+function finalAnswer(answer){
+  answers.push({question:"Rozimisan? ❤️",answer:answer});
+  sendAnswers();
+  document.getElementById("afterLove").innerHTML='<div class="small">Javobing qabul qilindi ❤️</div>';
+}
+function makeHeart(){
+  const e=document.createElement("div"); e.className="float"; e.textContent=["❤️","💕","💗","💖"][Math.floor(Math.random()*4)];
+  e.style.left=Math.random()*100+"vw"; e.style.animationDuration=(3+Math.random()*3)+"s";
+  document.body.appendChild(e); setTimeout(()=>e.remove(),6500);
+}
+render();
+</script>
+</body>
+</html>
